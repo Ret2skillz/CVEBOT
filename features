@@ -1,0 +1,15 @@
+fetch daily
+
+fetch vulns (add default dates based on current day)
+
+fetch other type of cwe ?
+
+more filters on cwe ?
+
+save cve
+
+show cve by most recent to most ancient
+
+search for poc
+
+search by vendor?company?software?
