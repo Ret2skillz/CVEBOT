@@ -34,7 +34,10 @@ fetch last 120 days = Done
 add way for user to give his own days limit = Done
 add way for custom limit between two dates
 
-command to save CVE
+command to save CVE = Done
+search db of user
+
+
 
 search for poc
 

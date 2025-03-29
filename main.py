@@ -13,6 +13,7 @@ class Client(commands.Bot):
 
     async def on_ready(self):
         await self.load_extension("fetch_vulns")
+        await self.load_extension("db_commands")
 
 if __name__ == "__main__":
     init_db()

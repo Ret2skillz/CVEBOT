@@ -8,7 +8,8 @@ def create_vuln_embed(vuln):
     )
 
     embed.add_field(name="description", value=vuln['description'])
-    embed.add_field(name="Published", value=vuln['published'])
+    if 'published' in vuln:
+        embed.add_field(name="Published", value=vuln['published'])
     embed.add_field(name="Url", value=vuln['url'])
 
     return embed

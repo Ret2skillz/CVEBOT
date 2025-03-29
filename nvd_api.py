@@ -231,6 +231,40 @@ class NVDAPI:
 
         return all_cve
     
+    async def fetch_by_id(self, cve_id):
+        all_cve = []
+
+        async with aiohttp.ClientSession() as session:
+            try:
+                url = self.base_url
+                params = {
+                    "cveId": cve_id
+                }
+
+                async with session.get(url, params=params, headers=self.headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        if 'vulnerabilities' in data:
+                            for vuln in data['vulnerabilities']:
+                                cve_item = {
+                                    'id': vuln['cve']['id'],
+                                    'description': vuln['cve']['descriptions'][0]['value'] if vuln['cve']['descriptions'] else "No description available",
+                                    'published': vuln['cve']['published'],
+                                    'cvss': None,
+                                    'url': f"https://nvd.nist.gov/vuln/detail/{vuln['cve']['id']}"
+                                }
+
+                                if 'metrics' in vuln['cve'] and 'cvssMetricV31' in vuln['cve']['metrics']:
+                                    cve_item['cvss'] = vuln['cve']['metrics']['cvssMetricV31'][0]['cvssData']['baseScore']
+
+                                all_cve.append(cve_item)
+                    else:
+                        print(f"Failed to fetch for {cve_id}: Status {response.status}")
+            except Exception as e:
+                print(f"Exception while fetching {cve_id}: {e}")
+
+        return all_cve
+    
     def list_cwe_pwn(self):
         return self.cwe_pwn_list
 
