@@ -13,3 +13,26 @@ show cve by most recent to most ancient
 search for poc
 
 search by vendor?company?software?
+
+filtrer par score 
+
+dernier jour
+
+dernière semaine
+
+dernier mois
+
+dernier trimestre
+
+
+commandes
+
+fetchDay = Done
+fetchWeek = Done
+fetchMonth (last 30 days) = Done
+fetch last 120 days = Done
+add way for user to give his own days limit = Done
+add way for custom limit between two dates
+
+command to save CVE
+

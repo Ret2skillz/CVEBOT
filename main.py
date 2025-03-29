@@ -5,8 +5,6 @@ from dotenv import load_dotenv
 import os
 
 
-import fetch_vulns
-
 class Client(commands.Bot):
     def __init__(self, command_prefix, intents, nvd_api):
         super().__init__(command_prefix=command_prefix, intents=intents)

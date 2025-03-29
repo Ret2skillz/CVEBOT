@@ -17,55 +17,184 @@ class NVDAPI:
     ]
         self.today = datetime.datetime.now().strftime("%Y-%m-%dT23:59:59.999")
         self.yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
-        self.yesterday.strftime("%Y-%m-%dT00:00:00.000")
+        self.yesterday = self.yesterday.strftime("%Y-%m-%dT00:00:00.000")
+        self.week_ago = datetime.datetime.now() - datetime.timedelta(days=7)
+        self.week_ago = self.week_ago.strftime("%Y-%m-%dT00:00:00.000")
+        self.month_ago = datetime.datetime.now() - datetime.timedelta(days=30)
+        self.month_ago = self.month_ago.strftime("%Y-%m-%dT00:00:00.000")
+        self.trimester_ago = datetime.datetime.now() - datetime.timedelta(days=119)
+        self.trimester_ago = self.trimester_ago.strftime("%Y-%m-%dT00:00:00.000")
         self.headers = {"apiKey": self.api_key}
 
     
-    def fetch_daily_pwn(self):
+    async def fetch_daily_pwn(self):
         all_cve = []
-        cwe_list = self.cwe_pwn_list
         pub_start_date = self.yesterday
         pub_end_date = self.today
 
-        for cwe_id in cwe_list:
-            try:
-               url = self.base_url
-               params = {
-                   "pubStartDate": pub_start_date,
-                   "pubEndDate": pub_end_date,
-                   "cweId": cwe_id
-               } 
+        async with aiohttp.ClientSession() as session:
+            for cwe_id in self.cwe_pwn_list:
+                try:
+                    url = self.base_url
+                    params = {
+                    "pubStartDate": pub_start_date,
+                    "pubEndDate": pub_end_date,
+                    "cweId": cwe_id
+                    } 
 
-               response = requests.get(url, params=params, headers=self.headers)
-               if response.status_code == 200:
-                    data = response.json()
-                    if 'vulnerabilities' in data:
-                        for vuln in data['vulnerabilities']:
-                            cve_item = {
-                            'id': vuln['cve']['id'],
-                            'description': vuln['cve']['descriptions'][0]['value'] if vuln['cve']['descriptions'] else "No description available",
-                            'published': vuln['cve']['published'],
-                            'cwe': cwe_id,
-                            'cvss': None,
-                            'url': f"https://nvd.nist.gov/vuln/detail/{vuln['cve']['id']}"
-                        }
+                    response = requests.get(url, params=params, headers=self.headers)
+                    if response.status_code == 200:
+                        data = response.json()
+                        if 'vulnerabilities' in data:
+                            for vuln in data['vulnerabilities']:
+                                cve_item = {
+                                'id': vuln['cve']['id'],
+                                'description': vuln['cve']['descriptions'][0]['value'] if vuln['cve']['descriptions'] else "No description available",
+                                'published': vuln['cve']['published'],
+                                'cwe': cwe_id,
+                                'cvss': None,
+                                'url': f"https://nvd.nist.gov/vuln/detail/{vuln['cve']['id']}"
+                            }
                         
                         # Extract CVSS score if available
-                            if 'metrics' in vuln['cve'] and 'cvssMetricV31' in vuln['cve']['metrics']:
-                                cve_item['cvss'] = vuln['cve']['metrics']['cvssMetricV31'][0]['cvssData']['baseScore']
+                                if 'metrics' in vuln['cve'] and 'cvssMetricV31' in vuln['cve']['metrics']:
+                                    cve_item['cvss'] = vuln['cve']['metrics']['cvssMetricV31'][0]['cvssData']['baseScore']
 
-                            all_cve.append(cve_item)
+                                all_cve.append(cve_item)
 
-                    else:
-                        print('FAIIIIIIIIILED')
+                        else:
+                            print('FAIIIIIIIIILED')
 
-                    #asyncio.sleep(1)
-            except Exception as e:
-                print('FAIIILED FETCHING CWEEEE NO PWNNN AHHHHHH')
+                    
+                except Exception as e:
+                    print('FAIIILED FETCHING CWEEEE NO PWNNN AHHHHHH')
         return all_cve
     
-    async def fetch_pwn(self, start_date, end_date):
+    async def fetch_weekly_pwn(self):
         all_cve = []
+        start_date = self.week_ago
+        end_date = self.today
+
+        async with aiohttp.ClientSession() as session:
+            for cwe_id in self.cwe_pwn_list:
+                try:
+                    url = self.base_url
+                    params = {
+                        "pubStartDate": start_date,
+                        "pubEndDate": end_date,
+                        "cweId": cwe_id
+                    }
+
+                    async with session.get(url, params=params, headers=self.headers) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            if 'vulnerabilities' in data:
+                                for vuln in data['vulnerabilities']:
+                                    cve_item = {
+                                        'id': vuln['cve']['id'],
+                                        'description': vuln['cve']['descriptions'][0]['value'] if vuln['cve']['descriptions'] else "No description available",
+                                        'published': vuln['cve']['published'],
+                                        'cwe': cwe_id,
+                                        'cvss': None,
+                                        'url': f"https://nvd.nist.gov/vuln/detail/{vuln['cve']['id']}"
+                                    }
+
+                                    if 'metrics' in vuln['cve'] and 'cvssMetricV31' in vuln['cve']['metrics']:
+                                        cve_item['cvss'] = vuln['cve']['metrics']['cvssMetricV31'][0]['cvssData']['baseScore']
+
+                                    all_cve.append(cve_item)
+                        else:
+                            print(f"Failed to fetch for {cwe_id}: Status {response.status}")
+                except Exception as e:
+                    print(f"Exception while fetching {cwe_id}: {e}")
+
+        return all_cve
+    
+    async def fetch_monthly_pwn(self):
+        all_cve = []
+        start_date = self.month_ago
+        end_date = self.today
+
+        async with aiohttp.ClientSession() as session:
+            for cwe_id in self.cwe_pwn_list:
+                try:
+                    url = self.base_url
+                    params = {
+                        "pubStartDate": start_date,
+                        "pubEndDate": end_date,
+                        "cweId": cwe_id
+                    }
+
+                    async with session.get(url, params=params, headers=self.headers) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            if 'vulnerabilities' in data:
+                                for vuln in data['vulnerabilities']:
+                                    cve_item = {
+                                        'id': vuln['cve']['id'],
+                                        'description': vuln['cve']['descriptions'][0]['value'] if vuln['cve']['descriptions'] else "No description available",
+                                        'published': vuln['cve']['published'],
+                                        'cwe': cwe_id,
+                                        'cvss': None,
+                                        'url': f"https://nvd.nist.gov/vuln/detail/{vuln['cve']['id']}"
+                                    }
+
+                                    if 'metrics' in vuln['cve'] and 'cvssMetricV31' in vuln['cve']['metrics']:
+                                        cve_item['cvss'] = vuln['cve']['metrics']['cvssMetricV31'][0]['cvssData']['baseScore']
+
+                                    all_cve.append(cve_item)
+                        else:
+                            print(f"Failed to fetch for {cwe_id}: Status {response.status}")
+                except Exception as e:
+                    print(f"Exception while fetching {cwe_id}: {e}")
+
+        return all_cve
+    
+    async def fetch_trimester_pwn(self):
+        all_cve = []
+        start_date = self.trimester_ago
+        end_date = self.today
+
+        async with aiohttp.ClientSession() as session:
+            for cwe_id in self.cwe_pwn_list:
+                try:
+                    url = self.base_url
+                    params = {
+                        "pubStartDate": start_date,
+                        "pubEndDate": end_date,
+                        "cweId": cwe_id
+                    }
+
+                    async with session.get(url, params=params, headers=self.headers) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            if 'vulnerabilities' in data:
+                                for vuln in data['vulnerabilities']:
+                                    cve_item = {
+                                        'id': vuln['cve']['id'],
+                                        'description': vuln['cve']['descriptions'][0]['value'] if vuln['cve']['descriptions'] else "No description available",
+                                        'published': vuln['cve']['published'],
+                                        'cwe': cwe_id,
+                                        'cvss': None,
+                                        'url': f"https://nvd.nist.gov/vuln/detail/{vuln['cve']['id']}"
+                                    }
+
+                                    if 'metrics' in vuln['cve'] and 'cvssMetricV31' in vuln['cve']['metrics']:
+                                        cve_item['cvss'] = vuln['cve']['metrics']['cvssMetricV31'][0]['cvssData']['baseScore']
+
+                                    all_cve.append(cve_item)
+                        else:
+                            print(f"Failed to fetch for {cwe_id}: Status {response.status}")
+                except Exception as e:
+                    print(f"Exception while fetching {cwe_id}: {e}")
+
+        return all_cve
+    
+    async def fetch_custom_pwn(self, range):
+        all_cve = []
+        start_date = datetime.datetime.now() - datetime.timedelta(days=range)
+        start_date = start_date.strftime("%Y-%m-%dT00:00:00.000")
+        end_date = self.today
 
         async with aiohttp.ClientSession() as session:
             for cwe_id in self.cwe_pwn_list:
