@@ -3,6 +3,7 @@ from discord.ext import commands
 from nvd_api import NVDAPI
 from dotenv import load_dotenv
 import os
+from db.setup import init_db
 
 
 class Client(commands.Bot):
@@ -14,6 +15,8 @@ class Client(commands.Bot):
         await self.load_extension("fetch_vulns")
 
 if __name__ == "__main__":
+    init_db()
+
     load_dotenv()
     token = os.getenv("DISCORD_TOKEN")
     api_key = os.getenv("NVD_API_KEY")
