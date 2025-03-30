@@ -100,5 +100,21 @@ class FetchVulns(commands.Cog):
 
         await paginate_embeds(self.bot, ctx, embeds)
 
+    @commands.command(
+                        name="vulnID",
+                        help="Fetches vuln by its ID\n"
+                        "Usage: \n"
+                        "vulnID <ID>"
+    )
+    async def vulnID(self, ctx, id: str=commands.parameter(description="Id of the CVE you want to search")):
+
+        vuln = await self.bot.nvd_api.fetch_by_id(id)
+
+        embeds = []
+        embed = create_vuln_embed(vuln)
+        embeds.append(embed)
+
+        await paginate_embeds(self.bot, ctx, embeds)
+
 async def setup(bot):
     await bot.add_cog(FetchVulns(bot))

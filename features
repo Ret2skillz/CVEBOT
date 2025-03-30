@@ -51,13 +51,13 @@ filtrer par score
 to add:
 search feature:
 being able to search with any date as base for date
-searching by id
+searching by id = Done
 searching by vendor/product
 filtering critical score
 
 database:
-deleting an entry
 updating an entry
+delete  = Done
 more features??
 
 PoC features:
