@@ -43,3 +43,14 @@ def search_by_type(discord_username, type_vuln):
     cves_type = cursor.fetchall()
     conn.close()
     return cves_type
+
+def delete_cve(discord_username):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "DELETE FROM saved_cves WHERE discord_username = ?",
+        (discord_username,)
+    )
+    conn.commit()
+    conn.close()
+

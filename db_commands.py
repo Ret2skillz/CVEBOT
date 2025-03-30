@@ -100,5 +100,18 @@ class DbCommands(commands.Cog):
             embeds.append(embed)
         await paginate_embeds(self.bot, ctx, embeds)
 
+    @commands.command(
+                        name="deleteCVE",
+                        help="Delete one of your saved CVE\n"
+                        "USage: \n"
+                        "/deleteCVE \n"
+    )
+    async def deleteCVE(self, ctx):
+        discord_username = ctx.author.display_name
+
+        delete_cve(discord_username)
+
+        await ctx.send("CVE successfully deleted")
+
 async def setup(bot):
     await bot.add_cog(DbCommands(bot))
