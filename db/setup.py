@@ -11,7 +11,9 @@ def init_db():
         discord_username TEXT NOT NULL,
         cve_id TEXT NOT NULL,
         description TEXT,
-        url TEXT
+        url TEXT,
+        tag TEXT,
+        type_vuln TEXT
     )
     """)
     conn.commit()

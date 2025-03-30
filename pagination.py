@@ -11,6 +11,10 @@ def create_vuln_embed(vuln):
     if 'published' in vuln:
         embed.add_field(name="Published", value=vuln['published'])
     embed.add_field(name="Url", value=vuln['url'])
+    if 'tag' in vuln:
+        embed.add_field(name="Tag", value=vuln['tag'])
+    if 'type_vuln' in vuln:
+        embed.add_field(name="Type", value=vuln['type_vuln'])
 
     return embed
 

@@ -35,7 +35,9 @@ add way for user to give his own days limit = Done
 add way for custom limit between two dates
 
 command to save CVE = Done
-search db of user
+search db of user = Done
+
+adapter, pour ajouter un tag ux cve ? pour les retrouver plus facilement ?
 
 
 
@@ -45,3 +47,18 @@ searhc by vendor or product
 
 filtrer par score
 
+
+to add:
+search feature:
+being able to search with any date as base for date
+searching by id
+searching by vendor/product
+filtering critical score
+
+database:
+deleting an entry
+updating an entry
+more features??
+
+PoC features:
+searching a poc in github
