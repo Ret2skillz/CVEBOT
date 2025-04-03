@@ -55,6 +55,8 @@ searching by id = Done
 searching by vendor/product
 filtering critical score
 
+add a functionality if no result was found for bot to say nothing was found
+
 database:
 updating an entry
 delete  = Done

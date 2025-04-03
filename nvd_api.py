@@ -40,7 +40,7 @@ class NVDAPI:
                     "pubStartDate": pub_start_date,
                     "pubEndDate": pub_end_date,
                     "cweId": cwe_id,
-                    **({"severity": severity.upper()} if severity else {})
+                    **({"cvssV3Severity": severity.upper()} if severity else {})
                     } 
                     
 
@@ -85,7 +85,7 @@ class NVDAPI:
                         "pubStartDate": start_date,
                         "pubEndDate": end_date,
                         "cweId": cwe_id,
-                        **({"severity": severity.upper()} if severity else {})
+                        **({"cvssV3Severity": severity.upper()} if severity else {})
                     }
 
                     async with session.get(url, params=params, headers=self.headers) as response:
@@ -126,7 +126,7 @@ class NVDAPI:
                         "pubStartDate": start_date,
                         "pubEndDate": end_date,
                         "cweId": cwe_id,
-                        **({"severity": severity.upper()} if severity else {})
+                        **({"cvssV3Severity": severity.upper()} if severity else {})
                     }
 
                     async with session.get(url, params=params, headers=self.headers) as response:
@@ -167,7 +167,7 @@ class NVDAPI:
                         "pubStartDate": start_date,
                         "pubEndDate": end_date,
                         "cweId": cwe_id,
-                        **({"severity": severity.upper()} if severity else {})
+                        **({"cvssV3Severity": severity.upper()} if severity else {})
                     }
 
                     async with session.get(url, params=params, headers=self.headers) as response:
@@ -219,7 +219,7 @@ class NVDAPI:
                         "pubStartDate": start_date,
                         "pubEndDate": end_date,
                         "cweId": cwe_id,
-                        **({"severity": severity.upper()} if severity else {})
+                        **({"cvssV3Severity": severity.upper()} if severity else {})
                     }
 
                     async with session.get(url, params=params, headers=self.headers) as response:
