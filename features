@@ -43,14 +43,14 @@ adapter, pour ajouter un tag ux cve ? pour les retrouver plus facilement ?
 
 search for poc
 
-searhc by vendor or product
+searhc by vendor or product, ajouter filtre ??
 
 filtrer par score
 
 
 to add:
 search feature:
-being able to search with any date as base for date
+being able to search with any date as base for date = Done
 searching by id = Done
 searching by vendor/product
 filtering critical score

@@ -27,7 +27,7 @@ class NVDAPI:
         self.headers = {"apiKey": self.api_key}
 
     
-    async def fetch_daily_pwn(self):
+    async def fetch_daily_pwn(self, severity=None):
         all_cve = []
         pub_start_date = self.yesterday
         pub_end_date = self.today
@@ -39,8 +39,10 @@ class NVDAPI:
                     params = {
                     "pubStartDate": pub_start_date,
                     "pubEndDate": pub_end_date,
-                    "cweId": cwe_id
+                    "cweId": cwe_id,
+                    **({"severity": severity.upper()} if severity else {})
                     } 
+                    
 
                     response = requests.get(url, params=params, headers=self.headers)
                     if response.status_code == 200:
@@ -70,7 +72,7 @@ class NVDAPI:
                     print('FAIIILED FETCHING CWEEEE NO PWNNN AHHHHHH')
         return all_cve
     
-    async def fetch_weekly_pwn(self):
+    async def fetch_weekly_pwn(self, severity=None):
         all_cve = []
         start_date = self.week_ago
         end_date = self.today
@@ -82,7 +84,8 @@ class NVDAPI:
                     params = {
                         "pubStartDate": start_date,
                         "pubEndDate": end_date,
-                        "cweId": cwe_id
+                        "cweId": cwe_id,
+                        **({"severity": severity.upper()} if severity else {})
                     }
 
                     async with session.get(url, params=params, headers=self.headers) as response:
@@ -110,7 +113,7 @@ class NVDAPI:
 
         return all_cve
     
-    async def fetch_monthly_pwn(self):
+    async def fetch_monthly_pwn(self, severity=None):
         all_cve = []
         start_date = self.month_ago
         end_date = self.today
@@ -122,7 +125,8 @@ class NVDAPI:
                     params = {
                         "pubStartDate": start_date,
                         "pubEndDate": end_date,
-                        "cweId": cwe_id
+                        "cweId": cwe_id,
+                        **({"severity": severity.upper()} if severity else {})
                     }
 
                     async with session.get(url, params=params, headers=self.headers) as response:
@@ -150,7 +154,7 @@ class NVDAPI:
 
         return all_cve
     
-    async def fetch_trimester_pwn(self):
+    async def fetch_trimester_pwn(self, severity=None):
         all_cve = []
         start_date = self.trimester_ago
         end_date = self.today
@@ -162,7 +166,8 @@ class NVDAPI:
                     params = {
                         "pubStartDate": start_date,
                         "pubEndDate": end_date,
-                        "cweId": cwe_id
+                        "cweId": cwe_id,
+                        **({"severity": severity.upper()} if severity else {})
                     }
 
                     async with session.get(url, params=params, headers=self.headers) as response:
@@ -190,11 +195,21 @@ class NVDAPI:
 
         return all_cve
     
-    async def fetch_custom_pwn(self, range):
+    async def fetch_custom_pwn(self, range, date="", severity=None):
         all_cve = []
-        start_date = datetime.datetime.now() - datetime.timedelta(days=range)
-        start_date = start_date.strftime("%Y-%m-%dT00:00:00.000")
-        end_date = self.today
+        if date == "":
+            start_date = datetime.datetime.now() - datetime.timedelta(days=range)
+            start_date = start_date.strftime("%Y-%m-%dT00:00:00.000")
+            end_date = self.today
+        else:
+            try:
+                parsed = datetime.datetime.strptime(date.strip(), "%Y-%m-%d")
+                start_date = parsed - datetime.timedelta(days=range)
+                start_date = start_date.strftime("%Y-%m-%dT00:00:00.000")
+                end_date = parsed.strftime("%Y-%m-%dT23:59:59.999")
+            except:
+                print("Invalid date")
+                return []
 
         async with aiohttp.ClientSession() as session:
             for cwe_id in self.cwe_pwn_list:
@@ -203,7 +218,8 @@ class NVDAPI:
                     params = {
                         "pubStartDate": start_date,
                         "pubEndDate": end_date,
-                        "cweId": cwe_id
+                        "cweId": cwe_id,
+                        **({"severity": severity.upper()} if severity else {})
                     }
 
                     async with session.get(url, params=params, headers=self.headers) as response:
