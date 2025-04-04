@@ -18,6 +18,17 @@ def create_vuln_embed(vuln):
 
     return embed
 
+def create_poc_embed(poc):
+    embed = discord.Embed(
+        title = poc['name'],
+        color=discord.Color.blue()
+    )
+
+    embed.add_field(name="owner", value=poc['owner'])
+    embed.add_field(name="url", value=poc['url'])
+
+    return embed
+
 async def paginate_embeds(bot, ctx, embeds, timeout=60):
     current_page = 0
     message = await ctx.send(embed=embeds[current_page])

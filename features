@@ -53,7 +53,7 @@ search feature:
 being able to search with any date as base for date = Done
 searching by id = Done
 searching by vendor/product
-filtering critical score
+filtering critical score = Done
 
 add a functionality if no result was found for bot to say nothing was found
 
@@ -64,3 +64,5 @@ more features??
 
 PoC features:
 searching a poc in github
+
+looking at diff? last commits? to see if it's open source and spot vuln??
