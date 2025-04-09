@@ -25,6 +25,10 @@ class FetchVulns(commands.Cog):
         
         vulns = await self.bot.nvd_api.fetch_weekly_pwn(severity)
 
+        if not vulns:
+            await ctx.send("No vulns with your criterias were found for this week!")
+            return
+
         embeds = []
         for vuln in vulns:
             embed = create_vuln_embed(vuln)
@@ -41,6 +45,10 @@ class FetchVulns(commands.Cog):
     async def vulnsM(self, ctx, severity: str= commands.parameter(default=None, description="<optional> Severity if you want one")):
 
         vulns = await self.bot.nvd_api.fetch_monthly_pwn(severity)
+
+        if not vulns:
+            await ctx.send("No vulns with criteria were found for this month!")
+            return
 
         embeds = []
         for vuln in vulns:
@@ -59,6 +67,10 @@ class FetchVulns(commands.Cog):
 
         vulns = await self.bot.nvd_api.fetch_trimester_pwn(severity)
 
+        if not vulns:
+            await ctx.send("No vulns with your criterias were found for the last 120 days!")
+            return
+
         embeds = []
         for vuln in vulns:
             embed = create_vuln_embed(vuln)
@@ -75,6 +87,10 @@ class FetchVulns(commands.Cog):
     async def vulnsD(self, ctx, severity: str= commands.parameter(default=None, description="<optional> Severity if you want one")):
 
         vulns = await self.bot.nvd_api.fetch_daily_pwn(severity)
+
+        if not vulns:
+            await ctx.send("No vulns with your criterias were found for last day")
+            return
 
         embeds = []
         for vuln in vulns:
@@ -99,6 +115,10 @@ class FetchVulns(commands.Cog):
 
         vulns = await self.bot.nvd_api.fetch_custom_pwn(range, date, severity)
 
+        if not vulns:
+            await ctx.send("No vulns found for your days range!")
+            return
+
         embeds = []
         for vuln in vulns:
             embed = create_vuln_embed(vuln)
@@ -115,6 +135,12 @@ class FetchVulns(commands.Cog):
     async def vulnID(self, ctx, id: str=commands.parameter(description="Id of the CVE you want to search")):
 
         vulns = await self.bot.nvd_api.fetch_by_id(id)
+
+        print(vulns)
+
+        if not vulns:
+            await ctx.send("No vuln of this ID found")
+            return
 
         vuln = vulns[0]
 
