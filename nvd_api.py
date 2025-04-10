@@ -1,7 +1,4 @@
-import requests
-import json
 import datetime
-import asyncio
 import aiohttp
 
 class NVDAPI:
@@ -44,25 +41,25 @@ class NVDAPI:
                     } 
                     
 
-                    response = requests.get(url, params=params, headers=self.headers)
-                    if response.status_code == 200:
-                        data = response.json()
-                        if 'vulnerabilities' in data:
-                            for vuln in data['vulnerabilities']:
-                                cve_item = {
-                                'id': vuln['cve']['id'],
-                                'description': vuln['cve']['descriptions'][0]['value'] if vuln['cve']['descriptions'] else "No description available",
-                                'published': vuln['cve']['published'],
-                                'cwe': cwe_id,
-                                'cvss': None,
-                                'url': f"https://nvd.nist.gov/vuln/detail/{vuln['cve']['id']}"
-                            }
+                    async with session.get(url, params=params, headers=self.headers) as response:
+                        if response.status_code == 200:
+                            data = response.json()
+                            if 'vulnerabilities' in data:
+                                for vuln in data['vulnerabilities']:
+                                    cve_item = {
+                                    'id': vuln['cve']['id'],
+                                    'description': vuln['cve']['descriptions'][0]['value'] if vuln['cve']['descriptions'] else "No description available",
+                                    'published': vuln['cve']['published'],
+                                    'cwe': cwe_id,
+                                    'cvss': None,
+                                    'url': f"https://nvd.nist.gov/vuln/detail/{vuln['cve']['id']}"
+                                    }
                         
                         # Extract CVSS score if available
-                                if 'metrics' in vuln['cve'] and 'cvssMetricV31' in vuln['cve']['metrics']:
-                                    cve_item['cvss'] = vuln['cve']['metrics']['cvssMetricV31'][0]['cvssData']['baseScore']
+                                    if 'metrics' in vuln['cve'] and 'cvssMetricV31' in vuln['cve']['metrics']:
+                                        cve_item['cvss'] = vuln['cve']['metrics']['cvssMetricV31'][0]['cvssData']['baseScore']
 
-                                all_cve.append(cve_item)
+                                    all_cve.append(cve_item)
 
                         else:
                             print('FAIIIIIIIIILED')

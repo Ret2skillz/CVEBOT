@@ -1,5 +1,4 @@
 import requests
-import aiohttp
 
 class GITHUBAPI:
     def __init__(self, github_key):
