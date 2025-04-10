@@ -19,6 +19,10 @@ class DbCommands(commands.Cog):
         
         vuln = await self.bot.nvd_api.fetch_by_id(cve_id)
 
+        if not vuln:
+            await ctx.send("You must have entered a wrong CVE ID")
+            return
+
         description = vuln[0]['description']
         url = vuln[0]['url']
 
@@ -38,6 +42,10 @@ class DbCommands(commands.Cog):
         discord_username = ctx.author.display_name
 
         vulns = search_cve(discord_username)
+
+        if not vulns:
+            await ctx.send("You have no saved CVEs")
+            return
 
         embeds = []
 
@@ -64,6 +72,10 @@ class DbCommands(commands.Cog):
 
         vulns = search_by_tag(discord_username, tag)
 
+        if not vulns:
+            await ctx.send("No CVEs of this tag found")
+            return
+
         embeds = []
 
         for cve_id, description, url, type_vuln in vulns:
@@ -87,6 +99,10 @@ class DbCommands(commands.Cog):
         discord_username = ctx.author.display_name
 
         vulns = search_by_type(discord_username, type_vuln)
+
+        if not vulns:
+            await ctx.send("No CVEs of this type found")
+            return
 
         embeds = []
 

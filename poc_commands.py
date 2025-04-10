@@ -7,15 +7,19 @@ class PoCCommands(commands.Cog):
         self.bot = bot
 
     @commands.command(
-                        name="searchPoC",
+                        name="searchPOC",
                         help="Search on github for a PoC for a specific CVE (note that it will only find repos with the cve id as their name\n"
                         "Usage: \n"
-                        "/earchPoC <cve_id>\n"
+                        "/searchPOC <cve_id>\n"
                     )
-    async def searchPoC(self, ctx, 
+    async def searchPOC(self, ctx, 
                       cve_id: str= commands.parameter(description="The ID of the CVE you want to find a PoC")):
         
         repos = await self.bot.github_api.fetch_poc(cve_id)
+
+        if not repos:
+            await ctx.send("No PoC found for this CVE")
+            return
 
         embeds = []
         for poc in repos:

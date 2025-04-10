@@ -136,8 +136,6 @@ class FetchVulns(commands.Cog):
 
         vulns = await self.bot.nvd_api.fetch_by_id(id)
 
-        print(vulns)
-
         if not vulns:
             await ctx.send("No vuln of this ID found")
             return

@@ -10,7 +10,9 @@ it allows to filter based on severity of vulnerabilities (if cssv3 is provided).
 
 Allow to save any cve base on its id and allow to add a group (for example if you want to group IOT vulns, Browser vulns, etc... to retrieve them more easily) to it and/or a tag.
 
-can then search all your cve, or just by a tag or a group.
+can then search all your cve, or just by a tag or a group. The database uses sqlite3 for now.
+
+
 
 Command to start the bot is : watchmedo auto-restart --patterns="*.py" --recursive -- python main.py
 
