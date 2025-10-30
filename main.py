@@ -17,6 +17,7 @@ class Client(commands.Bot):
         await self.load_extension("fetch_vulns")
         await self.load_extension("db_commands")
         await self.load_extension("poc_commands")
+        await self.load_extension("birthday_commands")
 
 if __name__ == "__main__":
     init_db()
