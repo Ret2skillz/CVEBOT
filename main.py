@@ -13,10 +13,11 @@ class Client(commands.Bot):
         self.nvd_api = nvd_api
         self.github_api = github_api
 
-    async def on_ready(self):
+    async def setup_hook(self):
         await self.load_extension("fetch_vulns")
         await self.load_extension("db_commands")
         await self.load_extension("poc_commands")
+        await self.tree.sync()
 
 if __name__ == "__main__":
     init_db()

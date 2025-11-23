@@ -1,3 +1,4 @@
+from discord import app_commands, Interaction
 from discord.ext import commands
 from pagination import create_vuln_embed, paginate_embeds
 from db.crud import *
@@ -6,45 +7,46 @@ class DbCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(
-                        name="saveCVE",
-                        help="Save any Cve you want based on its id, you can add a tag to retrieve them more easily (singe word, no spaces)\n"
-                        "Usage: \n"
-                        "/saveCve <cve_id> <tag> <type_vuln>\n"
+    async def cog_load(self):
+        pass
+
+    @app_commands.command(
+                        name="save",
+                        description="Save any Cve you want based on its id, tag is single word, no spaces"
                     )
-    async def saveCVE(self, ctx, 
-                      cve_id: str= commands.parameter(description="The ID of the CVE you want to save"),
-                      tag: str= commands.parameter(default="", description="<optional> a tag you can assign to each cve you save"),
-                      type_vuln: str=commands.parameter(default="", description="you can add a type to group some vulns, can be anything from type of vuln to vendor to date, just single word and no spaces")):
+    @app_commands.describe(
+                        cve_id="The ID of the CVE you want to save",
+                        tag="<optional> a tag you can assign to each cve you save",
+                        type_vuln="you can add a type to group some vulns, can be anything from type of vuln to vendor to date, just single word and no spaces"
+    )
+    async def saveCVE(self, interaction: Interaction, cve_id: str,tag: str= "", type_vuln: str=""):
         
         vuln = await self.bot.nvd_api.fetch_by_id(cve_id)
 
         if not vuln:
-            await ctx.send("You must have entered a wrong CVE ID")
+            await interaction.send("You must have entered a wrong CVE ID")
             return
 
         description = vuln[0]['description']
         url = vuln[0]['url']
 
-        discord_username = ctx.author.display_name
+        discord_username = interaction.author.display_name
 
         save_cve(discord_username, cve_id, description, url, tag, type_vuln)
 
-        await ctx.send('CVE saved')
+        await interaction.send('CVE saved')
 
-    @commands.command(
-                        name="myCVE",
-                        help="Search the CVEs you have saved\n"
-                        "Usage; \n"
-                        "/myCVE \n"
+    @app_commands.command(
+                        name="searchmy",
+                        description="Search all the CVEs you have saved\n"
     )
-    async def searchCVE(self, ctx):
-        discord_username = ctx.author.display_name
+    async def searchCVE(self, interaction: Interaction):
+        discord_username = interaction.author.display_name
 
         vulns = search_cve(discord_username)
 
         if not vulns:
-            await ctx.send("You have no saved CVEs")
+            await interaction.send("You have no saved CVEs")
             return
 
         embeds = []
@@ -58,22 +60,23 @@ class DbCommands(commands.Cog):
             "type_vuln": type_vuln
             })
             embeds.append(embed)
-        await paginate_embeds(self.bot, ctx, embeds)
+        await paginate_embeds(self.bot, interaction, embeds)
 
-    @commands.command(
-                        name="searchTAG",
-                        help="Search the CVEs you have saved, from its tag\n"
-                        "Usage; \n"
-                        "/searchTAG <tag> \n"
+    @app_commands.command(
+                        name="searchtag",
+                        description="Search the CVEs you have saved, from its tag\n"
     )
-    async def searchTAG(self, ctx,
-                        tag: str= commands.parameter(description="Tag of a CVE you have saved")):
-        discord_username = ctx.author.display_name
+    @app_commands.describe(
+                        tag="Tag of a CVE you have saved",
+    )
+    async def searchTAG(self, interaction: Interaction,
+                        tag: str):
+        discord_username = interaction.author.display_name
 
         vulns = search_by_tag(discord_username, tag)
 
         if not vulns:
-            await ctx.send("No CVEs of this tag found")
+            await interaction.send("No CVEs of this tag found")
             return
 
         embeds = []
@@ -86,22 +89,23 @@ class DbCommands(commands.Cog):
             "type_vuln": type_vuln
             })
             embeds.append(embed)
-        await paginate_embeds(self.bot, ctx, embeds)
+        await paginate_embeds(self.bot, interaction, embeds)
 
-    @commands.command(
-                        name="searchTYPE",
-                        help="Search the CVEs you have saved, by their type\n"
-                        "Usage; \n"
-                        "/searchTYPE <type_vuln>\n"
+    @app_commands.command(
+                        name="searchtype",
+                        description="Search the CVEs you have saved, by their type\n"
     )
-    async def searchTYPE(self, ctx,
-                        type_vuln: str= commands.parameter(description="Search vulns by their type, useful to 'group' your CVEs")):
-        discord_username = ctx.author.display_name
+    @app_commands.describe(
+                        type_vuln="Search vulns by their type, useful to 'group' your CVEs",
+    )
+    async def searchTYPE(self, interaction: Interaction,
+                        type_vuln: str):
+        discord_username = interaction.author.display_name
 
         vulns = search_by_type(discord_username, type_vuln)
 
         if not vulns:
-            await ctx.send("No CVEs of this type found")
+            await interaction.send("No CVEs of this type found")
             return
 
         embeds = []
@@ -114,20 +118,18 @@ class DbCommands(commands.Cog):
             "tag": tag
             })
             embeds.append(embed)
-        await paginate_embeds(self.bot, ctx, embeds)
+        await paginate_embeds(self.bot, interaction, embeds)
 
-    @commands.command(
-                        name="deleteCVE",
-                        help="Delete one of your saved CVE\n"
-                        "USage: \n"
-                        "/deleteCVE \n"
+    @app_commands.command(
+                        name="delete",
+                        description="Delete one of your saved CVE\n"
     )
-    async def deleteCVE(self, ctx):
-        discord_username = ctx.author.display_name
+    async def deleteCVE(self, interaction: Interaction):
+        discord_username = interaction.author.display_name
 
         delete_cve(discord_username)
 
-        await ctx.send("CVE successfully deleted")
+        await interaction.send("CVE successfully deleted")
 
 async def setup(bot):
     await bot.add_cog(DbCommands(bot))

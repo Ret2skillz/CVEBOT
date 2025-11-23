@@ -1,3 +1,4 @@
+from discord import app_commands, Interaction
 from discord.ext import commands
 from pagination import create_vuln_embed, paginate_embeds
 
@@ -5,28 +6,22 @@ class FetchVulns(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(help="Bot will send coucou to a mighty tomato")
-    async def coucou(self, ctx):
-        await ctx.send("coucou")
+    async def cog_load(self):
+        pass
 
-    @commands.command(help="Bot will just say bye to you")
-    async def bye(self, ctx):
-        await ctx.send("bye")
-
-    @commands.command(
-                        name="vulnsW",
-                        help="Fetches vulns based on 'pwn' CWEs of the last 7 days, you can add severity score if you want\n"
-                        "Usage: \n"
-                        "/vulnsW <severity>\n"
-                        "exemple : \n"
-                        "/vulnsW high"
+    @app_commands.command(
+                        name="weekly",
+                        description="Fetches vulns of the last 7 days, you can add severity score if you want\n"
                     )
-    async def vulnsW(self, ctx, severity: str= commands.parameter(default=None, description="<optional> Severity if you want one")):
+    @app_commands.describe(
+        severity="<optional> Severity if you want one"
+    )
+    async def vulnsW(self, interaction: Interaction, severity: str= ""):
         
         vulns = await self.bot.nvd_api.fetch_weekly_pwn(severity)
 
         if not vulns:
-            await ctx.send("No vulns with your criterias were found for this week!")
+            await interaction.send("No vulns with your criterias were found for this week!")
             return
 
         embeds = []
@@ -34,20 +29,21 @@ class FetchVulns(commands.Cog):
             embed = create_vuln_embed(vuln)
             embeds.append(embed)
 
-        await paginate_embeds(self.bot, ctx, embeds) 
+        await paginate_embeds(self.bot, interaction, embeds) 
 
-    @commands.command(
-                        name="vulnsM",
-                        help="Fetches vulns based on 'pwn' CWEs of the last 30 days\n"
-                        "Usage: \n"
-                        "/vulnsM \n"
+    @app_commands.command(
+                        name="monthly",
+                        description="Fetches vulns of the last 30 days\n"
                     )
-    async def vulnsM(self, ctx, severity: str= commands.parameter(default=None, description="<optional> Severity if you want one")):
+    @app_commands.describe(
+        severity="<optional> Severity if you want one"
+    )
+    async def vulnsM(self, interaction: Interaction, severity: str= ""):
 
         vulns = await self.bot.nvd_api.fetch_monthly_pwn(severity)
 
         if not vulns:
-            await ctx.send("No vulns with criteria were found for this month!")
+            await interaction.send("No vulns with criteria were found for this month!")
             return
 
         embeds = []
@@ -55,20 +51,21 @@ class FetchVulns(commands.Cog):
             embed = create_vuln_embed(vuln)
             embeds.append(embed)
 
-        await paginate_embeds(self.bot, ctx, embeds)
+        await paginate_embeds(self.bot, interaction, embeds)
 
-    @commands.command(
-                        name="vulnsT",
-                        help="Fetches vulns based on 'pwn' CWEs of the last 120 days\n"
-                        "Usage: \n"
-                        "/vulnsT \n"
+    @app_commands.command(
+                        name="trimester",
+                        description="Fetches vulns of the last 120 days\n"
                     )
-    async def vulnsT(self, ctx, severity: str= commands.parameter(default=None, description="<optional> Severity if you want one")):
+    @app_commands.describe(
+        severity="<optional> Severity if you want one"
+    )
+    async def vulnsT(self, interaction: Interaction, severity: str= ""):
 
         vulns = await self.bot.nvd_api.fetch_trimester_pwn(severity)
 
         if not vulns:
-            await ctx.send("No vulns with your criterias were found for the last 120 days!")
+            await interaction.send("No vulns with your criterias were found for the last 120 days!")
             return
 
         embeds = []
@@ -76,20 +73,21 @@ class FetchVulns(commands.Cog):
             embed = create_vuln_embed(vuln)
             embeds.append(embed)
 
-        await paginate_embeds(self.bot, ctx, embeds)
+        await paginate_embeds(self.bot, interaction, embeds)
 
-    @commands.command(
-                        name="vulnsD",
-                        help="Fetches vulns based on 'pwn' CWEs of the day\n"
-                        "Usage: \n"
-                        "/vulnsD \n"
+    @app_commands.command(
+                        name="daily",
+                        description="Fetches vulns of the last day\n"
                     )
-    async def vulnsD(self, ctx, severity: str= commands.parameter(default=None, description="<optional> Severity if you want one")):
+    @app_commands.describe(
+        severity="<optional> Severity if you want one"
+    )
+    async def vulnsD(self, interaction: Interaction, severity: str= ""):
 
         vulns = await self.bot.nvd_api.fetch_daily_pwn(severity)
 
         if not vulns:
-            await ctx.send("No vulns with your criterias were found for last day")
+            await interaction.send("No vulns with your criterias were found for last day")
             return
 
         embeds = []
@@ -97,26 +95,26 @@ class FetchVulns(commands.Cog):
             embed = create_vuln_embed(vuln)
             embeds.append(embed)
 
-        await paginate_embeds(self.bot, ctx, embeds)
+        await paginate_embeds(self.bot, interaction, embeds)
 
-    @commands.command(
-                        name="vulnsC",
-                        help="Fetches vulns, you amount a number it will fetch between today - number, this number can't be bigger than 119\n"
-                        "Or optionally you can give a custom date instead of today but use the format Y-M-D or it will not work\n"
-                        "Usage: \n"
-                        "/vulnsC <number> <date>\n"
-                        "Exemple: \n"
-                        "/vulnsC 70 2024-10-30"
+    @app_commands.command(
+                        name="custom",
+                        description="Fetches vulns, between today - number, this number can't be bigger than 119\n"
                     )
-    async def vulnsC(self, ctx, 
-                     range: int= commands.parameter(description="Range of days you need"), 
-                     date: str= commands.parameter(default="", description="<optional> If you want to use a different date as base than today"),
-                     severity: str= commands.parameter(default=None, description="<optional> Severity if you want one")):
+    @app_commands.describe(
+        range="Range of days you need",
+        date="<optional> If you want to use a different date as base than today",
+        severity="<optional> Severity if you want one"
+    )
+    async def vulnsC(self, interaction: Interaction, 
+                     range: int, 
+                     date: str= "",
+                     severity: str= ""):
 
         vulns = await self.bot.nvd_api.fetch_custom_pwn(range, date, severity)
 
         if not vulns:
-            await ctx.send("No vulns found for your days range!")
+            await interaction.send("No vulns found for your days range!")
             return
 
         embeds = []
@@ -124,30 +122,30 @@ class FetchVulns(commands.Cog):
             embed = create_vuln_embed(vuln)
             embeds.append(embed)
 
-        await paginate_embeds(self.bot, ctx, embeds)
+        await paginate_embeds(self.bot, interaction, embeds)
 
-    @commands.command(
-                        name="vulnID",
-                        help="Fetches vuln by its ID\n"
-                        "Usage: \n"
-                        "vulnID <ID>"
+    @app_commands.command(
+                        name="id",
+                        description="Fetches vuln by its ID\n"
     )
-    async def vulnID(self, ctx, id: str=commands.parameter(description="Id of the CVE you want to search")):
+    @app_commands.describe(
+        id="Id of the CVE you want to search"
+    )
+    async def vulnID(self, interaction: Interaction, id: str):
 
         vulns = await self.bot.nvd_api.fetch_by_id(id)
 
         if not vulns:
-            await ctx.send("No vuln of this ID found")
+            await interaction.send("No vuln of this ID found")
             return
 
         vuln = vulns[0]
 
         embeds = []
         embed = create_vuln_embed(vuln)
-        print(f'EMBEEED {embed}')
         embeds.append(embed)
 
-        await paginate_embeds(self.bot, ctx, embeds)
+        await paginate_embeds(self.bot, interaction, embeds)
 
 async def setup(bot):
     await bot.add_cog(FetchVulns(bot))
