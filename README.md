@@ -17,3 +17,12 @@ can then search all your cve, or just by a tag or a group. The database uses sql
 Command to start the bot is : watchmedo auto-restart --patterns="*.py" --recursive -- python main.py
 
 allows to not have to restart bot on every update
+
+Note: the commands so far are not that intuitive or great, and the code is far from perfect, I may or may not update this later on and make it better (and add comments maybe)
+
+TODO
+1. Track CVEs other than low level ones like Web
+2. Add some functionnalities for web3
+3. Other features than CVEs (fetching reddit security communities, tracking interesting articles, etc)
+4. Definitly add comments to the code :D
+5. Make it better i guess?
