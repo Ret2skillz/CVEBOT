@@ -23,7 +23,7 @@ class PoCCommands(commands.Cog):
         repos = await self.bot.github_api.fetch_poc(cve_id)
 
         if not repos:
-            await interaction.send("No PoC found for this CVE")
+            await interaction.response.send_message("No PoC found for this CVE")
             return
 
         embeds = []

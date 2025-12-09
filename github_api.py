@@ -20,7 +20,6 @@ class GITHUBAPI:
             print(response)
             if response.status_code == 200:
                 data = response.json()
-                print(data)
                 if 'items' in data:
                     for repo in data['items']:
                         repo_item = {
