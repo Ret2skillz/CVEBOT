@@ -21,7 +21,7 @@ class FetchVulns(commands.Cog):
         vulns = await self.bot.nvd_api.fetch_weekly_pwn(severity)
 
         if not vulns:
-            await interaction.send("No vulns with your criterias were found for this week!")
+            await interaction.response.send_message("No vulns with your criterias were found for this week!")
             return
 
         embeds = []
@@ -43,7 +43,7 @@ class FetchVulns(commands.Cog):
         vulns = await self.bot.nvd_api.fetch_monthly_pwn(severity)
 
         if not vulns:
-            await interaction.send("No vulns with criteria were found for this month!")
+            await interaction.response.send_message("No vulns with criteria were found for this month!")
             return
 
         embeds = []
@@ -65,7 +65,7 @@ class FetchVulns(commands.Cog):
         vulns = await self.bot.nvd_api.fetch_trimester_pwn(severity)
 
         if not vulns:
-            await interaction.send("No vulns with your criterias were found for the last 120 days!")
+            await interaction.response.send_message("No vulns with your criterias were found for the last 120 days!")
             return
 
         embeds = []
@@ -87,7 +87,7 @@ class FetchVulns(commands.Cog):
         vulns = await self.bot.nvd_api.fetch_daily_pwn(severity)
 
         if not vulns:
-            await interaction.send("No vulns with your criterias were found for last day")
+            await interaction.response.send_message("No vulns with your criterias were found for last day")
             return
 
         embeds = []
@@ -114,7 +114,7 @@ class FetchVulns(commands.Cog):
         vulns = await self.bot.nvd_api.fetch_custom_pwn(range, date, severity)
 
         if not vulns:
-            await interaction.send("No vulns found for your days range!")
+            await interaction.response.send_message("No vulns found for your days range!")
             return
 
         embeds = []
@@ -136,7 +136,7 @@ class FetchVulns(commands.Cog):
         vulns = await self.bot.nvd_api.fetch_by_id(id)
 
         if not vulns:
-            await interaction.send("No vuln of this ID found")
+            await interaction.response.send_message("No vuln of this ID found")
             return
 
         vuln = vulns[0]
