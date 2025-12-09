@@ -17,11 +17,12 @@ class FetchVulns(commands.Cog):
         severity="<optional> Severity if you want one"
     )
     async def vulnsW(self, interaction: Interaction, severity: str= ""):
-        
+        # acknowledge the interaction immediately so we can do long work
+        await interaction.response.defer()
         vulns = await self.bot.nvd_api.fetch_weekly_pwn(severity)
 
         if not vulns:
-            await interaction.response.send_message("No vulns with your criterias were found for this week!")
+            await interaction.followup.send("No vulns with your criterias were found for this week!")
             return
 
         embeds = []
@@ -39,11 +40,11 @@ class FetchVulns(commands.Cog):
         severity="<optional> Severity if you want one"
     )
     async def vulnsM(self, interaction: Interaction, severity: str= ""):
-
+        await interaction.response.defer()
         vulns = await self.bot.nvd_api.fetch_monthly_pwn(severity)
 
         if not vulns:
-            await interaction.response.send_message("No vulns with criteria were found for this month!")
+            await interaction.followup.send("No vulns with criteria were found for this month!")
             return
 
         embeds = []
@@ -61,11 +62,11 @@ class FetchVulns(commands.Cog):
         severity="<optional> Severity if you want one"
     )
     async def vulnsT(self, interaction: Interaction, severity: str= ""):
-
+        await interaction.response.defer()
         vulns = await self.bot.nvd_api.fetch_trimester_pwn(severity)
 
         if not vulns:
-            await interaction.response.send_message("No vulns with your criterias were found for the last 120 days!")
+            await interaction.followup.send("No vulns with your criterias were found for the last 120 days!")
             return
 
         embeds = []
@@ -83,11 +84,11 @@ class FetchVulns(commands.Cog):
         severity="<optional> Severity if you want one"
     )
     async def vulnsD(self, interaction: Interaction, severity: str= ""):
-
+        await interaction.response.defer()
         vulns = await self.bot.nvd_api.fetch_daily_pwn(severity)
 
         if not vulns:
-            await interaction.response.send_message("No vulns with your criterias were found for last day")
+            await interaction.followup.send("No vulns with your criterias were found for last day")
             return
 
         embeds = []
@@ -110,11 +111,11 @@ class FetchVulns(commands.Cog):
                      range: int, 
                      date: str= "",
                      severity: str= ""):
-
+        await interaction.response.defer()
         vulns = await self.bot.nvd_api.fetch_custom_pwn(range, date, severity)
 
         if not vulns:
-            await interaction.response.send_message("No vulns found for your days range!")
+            await interaction.followup.send("No vulns found for your days range!")
             return
 
         embeds = []
@@ -132,11 +133,12 @@ class FetchVulns(commands.Cog):
         id="Id of the CVE you want to search"
     )
     async def vulnID(self, interaction: Interaction, id: str):
-
+        # this one may be fast, but deferring is safe if lookup could be slow
+        await interaction.response.defer()
         vulns = await self.bot.nvd_api.fetch_by_id(id)
 
         if not vulns:
-            await interaction.response.send_message("No vuln of this ID found")
+            await interaction.followup.send("No vuln of this ID found")
             return
 
         vuln = vulns[0]
