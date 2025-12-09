@@ -30,14 +30,35 @@ def create_poc_embed(poc):
     return embed
 
 async def paginate_embeds(bot, ctx, embeds, timeout=60):
+    """
+    Paginate embeds and support both:
+    - commands.Context (prefix commands): ctx.send, ctx.author
+    - discord.Interaction (slash commands / component callbacks): interaction.response.send_message, interaction.user
+
+    Usage:
+      await paginate_embeds(bot, interaction, embeds)
+      or
+      await paginate_embeds(bot, ctx, embeds)
+    """
     current_page = 0
-    message = await ctx.send(embed=embeds[current_page])
+
+    is_interaction = isinstance(ctx, discord.Interaction)
+
+    if is_interaction:
+        # For interactions, send an initial response and fetch the created message
+        await ctx.response.send_message(embed=embeds[current_page])
+        message = await ctx.original_response()
+        author = ctx.user
+    else:
+        # Assume a commands.Context-like object
+        message = await ctx.send(embed=embeds[current_page])
+        author = ctx.author
 
     await message.add_reaction("⬅️")
     await message.add_reaction("➡️")
 
     def check(reaction, user):
-        return user == ctx.author and str(reaction.emoji) in ["⬅️", "➡️"]
+        return user == author and str(reaction.emoji) in ["⬅️", "➡️"]
     
     while True:
         try:
@@ -50,7 +71,8 @@ async def paginate_embeds(bot, ctx, embeds, timeout=60):
                 current_page -= 1
                 await message.edit(embed=embeds[current_page])
 
-            await message.remove_reaction(reaction, user)
+            # remove the user's reaction
+            await message.remove_reaction(str(reaction.emoji), user)
 
         except asyncio.TimeoutError:
             break
