@@ -33,21 +33,21 @@ async def paginate_embeds(bot, ctx, embeds, timeout=60):
     """
     Paginate embeds and support both:
     - commands.Context (prefix commands): ctx.send, ctx.author
-    - discord.Interaction (slash commands / component callbacks): interaction.response.send_message, interaction.user
-
-    Usage:
-      await paginate_embeds(bot, interaction, embeds)
-      or
-      await paginate_embeds(bot, ctx, embeds)
+    - discord.Interaction (slash commands / component callbacks): interaction.response/send / followup.send
     """
     current_page = 0
 
     is_interaction = isinstance(ctx, discord.Interaction)
 
     if is_interaction:
-        # For interactions, send an initial response and fetch the created message
-        await ctx.response.send_message(embed=embeds[current_page])
-        message = await ctx.original_response()
+        # If response has not been used yet, use response.send_message then fetch original_response.
+        # If response was already deferred (or already sent), use followup.send(..., wait=True)
+        if not ctx.response.is_done():
+            await ctx.response.send_message(embed=embeds[current_page])
+            message = await ctx.original_response()
+        else:
+            # response was already deferred (or already sent), create a followup message and get it
+            message = await ctx.followup.send(embed=embeds[current_page], wait=True)
         author = ctx.user
     else:
         # Assume a commands.Context-like object
@@ -71,8 +71,8 @@ async def paginate_embeds(bot, ctx, embeds, timeout=60):
                 current_page -= 1
                 await message.edit(embed=embeds[current_page])
 
-            # remove the user's reaction
-            await message.remove_reaction(str(reaction.emoji), user)
+            # remove the user's reaction (use the emoji and the user)
+            await message.remove_reaction(reaction.emoji, user)
 
         except asyncio.TimeoutError:
             break
