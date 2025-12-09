@@ -1,7 +1,4 @@
 .env
 __pycache__/
 *.pyc
-*Bday*
-*bday*
-*birthday*
 cves.db
