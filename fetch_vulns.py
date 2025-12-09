@@ -175,8 +175,7 @@ class FetchVulns(commands.Cog):
     )
     @app_commands.describe(
         id="Id of the CVE you want to search",
-        as_csv="<
-optional> Send results as a CSV file instead of paginated embeds (may be small)"
+        as_csv="<optional> Send results as a CSV file instead of paginated embeds (may be small)"
     )
     async def vulnID(self, interaction: Interaction, id: str, as_csv: bool = False):
         # this one may be fast, but deferring is safe if lookup could be slow
