@@ -24,29 +24,29 @@ class DbCommands(commands.Cog):
         vuln = await self.bot.nvd_api.fetch_by_id(cve_id)
 
         if not vuln:
-            await interaction.send("You must have entered a wrong CVE ID")
+            await interaction.response.send_message("You must have entered a wrong CVE ID")
             return
 
         description = vuln[0]['description']
         url = vuln[0]['url']
 
-        discord_username = interaction.author.display_name
+        discord_username = interaction.user.display_name
 
         save_cve(discord_username, cve_id, description, url, tag, type_vuln)
 
-        await interaction.send('CVE saved')
+        await interaction.response.send_message('CVE saved')
 
     @app_commands.command(
                         name="searchmy",
                         description="Search all the CVEs you have saved\n"
     )
     async def searchCVE(self, interaction: Interaction):
-        discord_username = interaction.author.display_name
+        discord_username = interaction.user.display_name
 
         vulns = search_cve(discord_username)
 
         if not vulns:
-            await interaction.send("You have no saved CVEs")
+            await interaction.response.send_message("You have no saved CVEs")
             return
 
         embeds = []
@@ -71,12 +71,12 @@ class DbCommands(commands.Cog):
     )
     async def searchTAG(self, interaction: Interaction,
                         tag: str):
-        discord_username = interaction.author.display_name
+        discord_username = interaction.user.display_name
 
         vulns = search_by_tag(discord_username, tag)
 
         if not vulns:
-            await interaction.send("No CVEs of this tag found")
+            await interaction.response.send_message("No CVEs of this tag found")
             return
 
         embeds = []
@@ -100,12 +100,12 @@ class DbCommands(commands.Cog):
     )
     async def searchTYPE(self, interaction: Interaction,
                         type_vuln: str):
-        discord_username = interaction.author.display_name
+        discord_username = interaction.user.display_name
 
         vulns = search_by_type(discord_username, type_vuln)
 
         if not vulns:
-            await interaction.send("No CVEs of this type found")
+            await interaction.response.send_message("No CVEs of this type found")
             return
 
         embeds = []
@@ -125,11 +125,11 @@ class DbCommands(commands.Cog):
                         description="Delete one of your saved CVE\n"
     )
     async def deleteCVE(self, interaction: Interaction):
-        discord_username = interaction.author.display_name
+        discord_username = interaction.user.display_name
 
         delete_cve(discord_username)
 
-        await interaction.send("CVE successfully deleted")
+        await interaction.response.send_message("CVE successfully deleted")
 
 async def setup(bot):
     await bot.add_cog(DbCommands(bot))
