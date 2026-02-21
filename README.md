@@ -17,12 +17,20 @@ Table of contents
 - Requirements
 - Quick start (local development)
 - Configuration (.env)
-- Inviting the bot (permissions & scopes)
-- Gateway intents & developer portal
-- Running (development & production)
+- Inviting the bot — exact scopes & permissions
+- Gateway intents & Developer Portal settings
+- Hosting online (always-on + automatic updates) — see [HOSTING.md](HOSTING.md)
+  - OVH VPS
+  - Hetzner Cloud
+  - DigitalOcean Droplet
+  - AWS EC2 Free Tier
+  - Railway (free PaaS)
+  - Render (free PaaS)
+- Automatic updates via GitHub Actions
 - Commands / Usage
 - Pagination & permissions notes
 - Troubleshooting (common errors)
+- Security & best practices
 - Contributing
 - License
 - Contact
@@ -42,7 +50,7 @@ Requirements
 - pip
 - A Discord application + bot token (Developer Portal)
 - Recommended: virtual environment to isolate dependencies
-- (Optional) Database backend — the repo contains a `db` module. By default you can use an SQLite URL.
+- (Optional) Database backend — the repo contains a `db` module. By default it uses SQLite.
 
 Quick start (local development)
 1. Clone the repository
@@ -64,173 +72,227 @@ Quick start (local development)
 5. Invite the bot to a test guild (see "Inviting the bot")
 
 6. Run the bot
-   # option A — development (auto-reload)
+   # option A — development (auto-reload on file save)
    watchmedo auto-restart --patterns="*.py" --recursive -- python main.py
 
    # option B — direct
    python main.py
 
 Configuration (.env)
-Create a `.env` file in the repo root with at least the following variables (example):
+Copy `.env.example` to `.env` and fill in your values:
 
-DISCORD_TOKEN="your_bot_token_here"
-DATABASE_URL="sqlite:///data.db"         # or a Postgres/MySQL URL
-CLIENT_ID="your_app_client_id"           # optional, used for invite links
-GUILD_ID="your_test_guild_id"            # optional, used for local command sync
-NVD_API_KEY=""                           # optional if your nvd_api wrapper requires an api key
-LOG_LEVEL="INFO"
+   cp .env.example .env
+
+Minimum required variables:
+
+   DISCORD_TOKEN="your_bot_token_here"
+   NVD_API_KEY=""              # optional but strongly recommended
+   GITHUB_TOKEN=""             # optional, used for PoC lookups
+   LOG_LEVEL="INFO"            # DEBUG | INFO | WARNING | ERROR
 
 Notes:
-- Keep tokens secret. Do not commit `.env` to git.
-- If the bot uses other env vars (custom integrations), add them here.
+- Keep tokens secret. Never commit `.env` to git (it is already in `.gitignore`).
 
-Inviting the bot (permissions & scopes)
-Use these OAuth scopes:
-- bot
-- applications.commands
+---
 
-Recommended permission sets (choose one):
+Inviting the bot — exact scopes & permissions
+Step-by-step in the Developer Portal (https://discord.com/developers/applications):
 
-- Full UX with reaction removal (recommended if you want the paginator to remove user reactions):
-  - Permission integer: 355392
-  - This includes MANAGE_MESSAGES so the bot can remove other users' reactions.
+1. Open your application → OAuth2 → URL Generator.
 
-- Full UX without MANAGE_MESSAGES (safer):
-  - Permission integer: 347200
-  - The paginator will still work but will not be able to remove other users' reactions — it will attempt to remove its own reaction or ignore the failure.
+2. Under SCOPES tick exactly:
+   [x] bot
+   [x] applications.commands        <- required for / slash commands to register & appear
 
-Invite URL templates (replace CLIENT_ID):
-- With MANAGE_MESSAGES:
-  https://discord.com/oauth2/authorize?client_id=CLIENT_ID&permissions=355392&scope=bot%20applications.commands
-- Without MANAGE_MESSAGES:
-  https://discord.com/oauth2/authorize?client_id=CLIENT_ID&permissions=347200&scope=bot%20applications.commands
+3. Under BOT PERMISSIONS tick:
+
+   Permission            | Why it is needed
+   ----------------------|--------------------------------------------------
+   View Channels         | Bot must be able to see the channel it replies in
+   Send Messages         | Post CVE embeds
+   Send Messages in Threads | (optional) if you use threads
+   Embed Links           | CVE results are sent as rich embeds
+   Attach Files          | CSV export feature
+   Read Message History  | Required for reaction-based paginator
+   Add Reactions         | Bot adds ⬅️ ➡️ reactions for page navigation
+   Manage Messages       | Bot removes old reactions during pagination (optional but recommended)
+
+   Permission integer (with Manage Messages):    355392
+   Permission integer (without Manage Messages): 347200
+
+4. Copy the generated URL at the bottom and open it in your browser to add the
+   bot to your server.
+
+Invite URL templates (replace CLIENT_ID with your application's client ID):
+
+   With Manage Messages (recommended):
+   https://discord.com/oauth2/authorize?client_id=CLIENT_ID&permissions=355392&scope=bot%20applications.commands
+
+   Without Manage Messages (safer / stricter):
+   https://discord.com/oauth2/authorize?client_id=CLIENT_ID&permissions=347200&scope=bot%20applications.commands
+
+Why applications.commands is mandatory for slash commands
+- Without it the bot cannot register / commands with Discord.
+- Even if the Python code registers commands, users will not see them in the
+  UI unless this scope is present in the invite.
+
+---
 
 Gateway intents & Developer Portal settings
-- In the Developer Portal > Bot:
-  - Enable intents you need. For this project, ensure:
-    - Server Members Intent — only if you need member lists (not required for most features)
-    - Message Content Intent — only if you require raw message content (slash commands do not need this)
-  - The bot requires standard intents to receive reaction events.
-- In code (discord.py style):
+In Developer Portal -> your application -> Bot page:
+
+1. Scroll to "Privileged Gateway Intents".
+2. Enable:
+   [x] Message Content Intent  (required — main.py sets intents.message_content = True)
+3. Leave the following OFF unless you need them:
+   [ ] Server Members Intent
+   [ ] Presence Intent
+
+In code (already set in main.py):
 ```py
 intents = discord.Intents.default()
-intents.guilds = True
-intents.messages = True
-# enable only if you need them:
-# intents.members = True
-# intents.message_content = True
-
-bot = commands.Bot(command_prefix="!", intents=intents)
+intents.message_content = True   # must match the Developer Portal toggle
 ```
 
-Important: make sure Developer Portal intents settings match the code.
+Important: the Developer Portal toggle and the code must agree.
+If the toggle is OFF but the code requests it (or vice-versa), you will get an
+error or silently lose events.
+
+---
+
+Hosting online — always-on + automatic updates
+
+For full step-by-step provider-specific instructions see **[HOSTING.md](HOSTING.md)**.
+
+Providers covered: OVH VPS · Hetzner Cloud · DigitalOcean · AWS EC2 Free Tier
+· Railway (free PaaS) · Render (free PaaS).
+
+Quick summary — on any Linux VPS (after installing Docker):
+
+   git clone https://github.com/Ret2skillz/CVEBOT.git ~/cvebot
+   cd ~/cvebot
+   cp .env.example .env && nano .env   # set DISCORD_TOKEN etc.
+   docker compose up -d               # starts bot + Watchtower (auto-updates)
+   docker compose logs -f cvebot      # verify login
+
+Watchtower polls GitHub Container Registry every 5 minutes. When GitHub Actions
+pushes a new :latest image (on every merge to main), Watchtower pulls it and
+restarts the container — no manual SSH needed.
+
+For bare-metal / no-Docker setups, see the systemd section in HOSTING.md.
+
+---
+
+Automatic updates via GitHub Actions
+The repository includes `.github/workflows/docker-publish.yml`.
+
+What it does:
+- Triggers on every push to main (and as a dry-run build on PRs).
+- Builds the Docker image.
+- Pushes it to GitHub Container Registry (ghcr.io) as:
+    ghcr.io/YOUR_GITHUB_USERNAME/cvebot:latest
+    ghcr.io/YOUR_GITHUB_USERNAME/cvebot:sha-<short-sha>
+
+Combined with Watchtower on your server, the full flow is:
+  1. You push a commit to main (or merge a PR).
+  2. GitHub Actions builds and pushes a new :latest image to GHCR (~2 min).
+  3. Watchtower notices the new image within 5 minutes and restarts the bot
+     container with the new code.
+
+No manual SSH or deployment steps required.
+
+---
 
 Registering slash commands (guild vs global)
-- For development: register commands for a single guild for instant updates.
-- For production: you can register global commands, but expect up to ~1 hour of propagation.
-
-Example (syncing guild commands):
+- For development: register commands for a single guild for instant updates:
 ```py
 await bot.tree.sync(guild=discord.Object(id=GUILD_ID))
 ```
+- For production: global sync (already in main.py via `await self.tree.sync()`).
+  Expect up to ~1 hour for Discord to propagate global commands after first run
+  or after adding new commands.
 
-Running (production)
-- Recommended: run under systemd, Docker, or a process manager (pm2, supervisor).
-- Ensure environment variables are set in the service manager.
-- Rotate your token if it leaks. If you restart or change code, restart the process so the new code is used.
+---
 
 Commands / Usage
 From the implemented cogs:
 
 Fetch commands (fetch_vulns.py)
-- /weekly [severity] — Fetch vulns of the last 7 days
-- /monthly [severity] — Fetch vulns of the last 30 days
-- /trimester [severity] — Fetch vulns of the last 120 days
-- /daily [severity] — Fetch vulns of the last day
-- /custom range [date?] [severity?] — Custom range (max 119)
-- /id id — Fetch CVE by ID
+- /weekly [severity] [product] [as_csv] [exact] — Fetch vulns of the last 7 days
+- /monthly [severity] [product] [as_csv] [exact] — Fetch vulns of the last 30 days
+- /trimester [severity] [product] [as_csv] [exact] — Fetch vulns of the last 120 days
+- /daily [severity] [product] [as_csv] [exact] — Fetch vulns of the last day
+- /custom range [date] [severity] [product] [as_csv] [exact] — Custom range (max 119 days)
+- /id id [product] [as_csv] [exact] — Fetch CVE by ID
 
 Database commands (db_commands.py)
 - /save cve_id [tag] [type_vuln] — Save CVE for your user
 - /searchmy — List your saved CVEs
 - /searchtag tag — Search saved CVEs by tag
 - /searchtype type_vuln — Search saved CVEs by type
-- /delete — Delete one of your saved CVEs (implementation dependent)
+- /delete — Delete one of your saved CVEs
 
 Pagination UX
 - The bot uses reaction-based pagination:
   - Reactions: ⬅️ and ➡️ to move between pages.
-  - The paginator attempts to remove the invoking user's reaction (requires MANAGE_MESSAGES).
+  - The paginator attempts to remove the invoking user's reaction (requires Manage Messages).
   - If the bot lacks permission, it will attempt to remove its own reaction or ignore the error (non-fatal).
-- Consider migrating to component-based pagination (buttons) for a smoother slash-command UX and to avoid MANAGE_MESSAGES.
+- Consider migrating to component-based pagination (buttons) for a smoother slash-command UX
+  and to avoid needing Manage Messages.
+
+---
 
 Troubleshooting — common errors & fixes
 - AttributeError: 'Interaction' object has no attribute 'send'
-  - Fix: use `await interaction.response.send_message(...)` for the initial reply. If you previously deferred, use `await interaction.followup.send(...)`.
+  - Fix: use `await interaction.response.send_message(...)` for the initial reply.
+    If you previously deferred, use `await interaction.followup.send(...)`.
 
 - NotFound: 404 Unknown interaction
-  - The interaction was not acknowledged within 3 seconds. Fix: call `await interaction.response.defer()` early in long-running commands, then use followup for sending content.
+  - The interaction was not acknowledged within 3 seconds.
+    Fix: call `await interaction.response.defer()` early in long-running commands,
+    then use followup for sending content.
 
 - Forbidden: 403 Missing Permissions (when removing reactions)
-  - The bot lacks MANAGE_MESSAGES. Either invite the bot with that permission, or update the paginator to not remove other users' reactions and catch the Forbidden exception.
+  - The bot lacks Manage Messages. Either invite the bot with that permission,
+    or update the paginator to not remove other users' reactions and catch the
+    Forbidden exception.
 
 - Slash commands not appearing or changes not propagating
-  - Guild commands propagate instantly. Global commands can take up to ~1 hour to update. Use guild registration when developing.
+  - Guild commands propagate instantly.
+    Global commands can take up to ~1 hour to update.
+    Use guild registration when developing.
 
 - Bot not visible in Developer Portal
-  - Ensure you’re logged into the correct Discord account. Run a small snippet in your running bot to print application info:
+  - Ensure you're logged into the correct Discord account.
+    Run a small snippet in your running bot to print application info:
 ```py
 app = await bot.application_info()
 print(app.id, app.name, app.owner)
 ```
 
+---
+
 Security & best practices
 - Keep tokens and API keys out of VCS. Use .env, secrets manager, or CI secret variables.
 - Do not give the bot Administrator unless absolutely necessary.
 - Rotate tokens if you suspect a leak.
-- If you plan to run this in production and enable members/message_content intents, be mindful of Discord policy and privacy rules.
+- If you plan to run this in production and enable members/message_content intents,
+  be mindful of Discord policy and privacy rules.
 
 Development & contribution
 - Use feature branches and open PRs for changes.
 - Keep code style consistent. Run linters / formatters before opening a PR.
 - Add unit tests for shared utilities where possible.
 
-Example systemd unit (for reference)
-[Unit]
-Description=CVEBOT
-After=network.target
-
-[Service]
-Type=simple
-User=youruser
-WorkingDirectory=/path/to/CVEBOT
-Environment="PATH=/path/to/CVEBOT/.venv/bin"
-EnvironmentFile=/path/to/CVEBOT/.env
-ExecStart=/path/to/CVEBOT/.venv/bin/python main.py
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-
-Switching to button-based paginator (recommendation)
-- Buttons avoid MANAGE_MESSAGES and provide a better UX for slash commands.
-- Consider migrating reaction paginator to discord.ui.Button based paginator when you have time.
+---
 
 Contributors
 - Please open an issue for bugs or feature requests.
 - When submitting PRs, include tests and explain the rationale.
 
 License
-- Add your chosen license here (e.g., MIT). If none, add one to `LICENSE` file.
+- MIT — see the `LICENSE` file.
 
 Contact
 - Author / maintainer: Ret2skillz (GitHub: Ret2skillz)
 - For urgent support (e.g., stolen tokens), rotate the Discord token in the Developer Portal immediately.
-
----
-
-If you want, I can:
-- Create a ready-to-use invite URL with your CLIENT_ID plugged in.
-- Add a systemd service file or Dockerfile + docker-compose manifest for easier deployments.
-- Replace the reaction paginator with a button-based paginator and open a PR with working tests.

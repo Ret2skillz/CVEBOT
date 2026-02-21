@@ -1,0 +1,29 @@
+services:
+  cvebot:
+    # Default image published by this repository to GHCR.
+    # If you forked this repo, replace with:
+    #   ghcr.io/<your-github-username>/cvebot:latest
+    # or uncomment the build line below to build locally:
+    #   build: .
+    image: ghcr.io/ret2skillz/cvebot:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # Persist the SQLite database across container restarts / updates
+      - cvebot_data:/data
+    environment:
+      DB_PATH: /data/cves.db
+
+  # Watchtower polls Docker Hub / GHCR for a new image every 5 minutes and
+  # automatically re-creates the cvebot container with zero manual steps.
+  # Remove this service if you prefer to pull and restart manually.
+  watchtower:
+    image: containrrr/watchtower:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 300 cvebot
+
+volumes:
+  cvebot_data:
