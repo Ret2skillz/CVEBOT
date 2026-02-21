@@ -17,6 +17,7 @@ class Client(commands.Bot):
         await self.load_extension("fetch_vulns")
         await self.load_extension("db_commands")
         await self.load_extension("poc_commands")
+        await self.load_extension("audit_commands")
         await self.tree.sync()
 
 if __name__ == "__main__":

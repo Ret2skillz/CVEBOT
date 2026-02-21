@@ -29,6 +29,20 @@ def create_poc_embed(poc):
 
     return embed
 
+def create_audit_embed(repo):
+    embed = discord.Embed(
+        title=repo['name'],
+        url=repo['url'],
+        description=repo['description'],
+        color=discord.Color.orange()
+    )
+    embed.add_field(name="Owner", value=repo['owner'])
+    embed.add_field(name="Language", value=repo['language'])
+    embed.add_field(name="Stars", value=str(repo['stars']))
+    embed.add_field(name="Size (KB)", value=str(repo['size_kb']))
+    embed.add_field(name="Last Push", value=repo['last_push'])
+    return embed
+
 async def paginate_embeds(bot, ctx, embeds, timeout=60):
     """
     Paginate embeds and support both:
