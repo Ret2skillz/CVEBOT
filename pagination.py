@@ -101,7 +101,6 @@ def create_poc_embed(poc: Dict[str, Any]) -> discord.Embed:
 
     return embed
 
-<<<<<<< Updated upstream
 def create_audit_embed(repo):
     embed = discord.Embed(
         title=repo['name'],
@@ -116,8 +115,6 @@ def create_audit_embed(repo):
     embed.add_field(name="Last Push", value=repo['last_push'])
     return embed
 
-async def paginate_embeds(bot, ctx, embeds, timeout=60):
-=======
 def _embed_to_text(embed: discord.Embed) -> str:
     """
     Render embed into plain text for fallback when embed cannot be sent.
@@ -136,7 +133,6 @@ def _embed_to_text(embed: discord.Embed) -> str:
     return "\n".join(lines)
 
 async def paginate_embeds(bot, ctx, embeds: List[discord.Embed], timeout: int = 60):
->>>>>>> Stashed changes
     """
     Paginate embeds and support both:
     - discord.Interaction: use response / followup
