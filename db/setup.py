@@ -1,6 +1,7 @@
 import sqlite3
+import os
 
-DB_PATH = "cves.db"
+DB_PATH = os.environ.get("DB_PATH", "cves.db")
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
