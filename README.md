@@ -19,9 +19,13 @@ Table of contents
 - Configuration (.env)
 - Inviting the bot — exact scopes & permissions
 - Gateway intents & Developer Portal settings
-- Hosting online (always-on + automatic updates)
-  - Option A — Docker + Watchtower (recommended)
-  - Option B — systemd (bare-metal / VPS)
+- Hosting online (always-on + automatic updates) — see [HOSTING.md](HOSTING.md)
+  - OVH VPS
+  - Hetzner Cloud
+  - DigitalOcean Droplet
+  - AWS EC2 Free Tier
+  - Railway (free PaaS)
+  - Render (free PaaS)
 - Automatic updates via GitHub Actions
 - Commands / Usage
 - Pagination & permissions notes
@@ -158,79 +162,24 @@ error or silently lose events.
 
 Hosting online — always-on + automatic updates
 
-Option A — Docker + Watchtower (recommended)
-This is the easiest way to keep the bot running 24/7 on a VPS (DigitalOcean,
-Hetzner, Linode, AWS EC2, etc.) and have it update itself automatically whenever
-a new image is published to the GitHub Container Registry.
+For full step-by-step provider-specific instructions see **[HOSTING.md](HOSTING.md)**.
 
-Prerequisites on the server:
-- Docker >= 24
-- Docker Compose v2  (docker compose, not docker-compose)
+Providers covered: OVH VPS · Hetzner Cloud · DigitalOcean · AWS EC2 Free Tier
+· Railway (free PaaS) · Render (free PaaS).
 
-1. Copy the repo files or just the two compose files to your server:
-   git clone https://github.com/Ret2skillz/CVEBOT.git
-   cd CVEBOT
+Quick summary — on any Linux VPS (after installing Docker):
 
-2. Create your .env file:
-   cp .env.example .env
-   nano .env      # fill in DISCORD_TOKEN, NVD_API_KEY, GITHUB_TOKEN
+   git clone https://github.com/Ret2skillz/CVEBOT.git ~/cvebot
+   cd ~/cvebot
+   cp .env.example .env && nano .env   # set DISCORD_TOKEN etc.
+   docker compose up -d               # starts bot + Watchtower (auto-updates)
+   docker compose logs -f cvebot      # verify login
 
-3. Start the bot and Watchtower:
-   docker compose up -d
+Watchtower polls GitHub Container Registry every 5 minutes. When GitHub Actions
+pushes a new :latest image (on every merge to main), Watchtower pulls it and
+restarts the container — no manual SSH needed.
 
-   - cvebot starts and writes its SQLite DB to the named volume cvebot_data
-     (survives restarts and image updates).
-   - watchtower polls GHCR every 5 minutes; when a new image tagged :latest
-     appears it pulls it, stops the old container, and starts a new one
-     automatically — zero downtime updates.
-
-4. Verify it is running:
-   docker compose logs -f cvebot
-
-Useful commands:
-   docker compose down                           # stop everything
-   docker compose pull && docker compose up -d  # manual update
-   docker compose logs -f                        # live logs
-
-Option B — systemd (bare-metal / VPS without Docker)
-
-1. Clone and install:
-   git clone https://github.com/Ret2skillz/CVEBOT.git /opt/cvebot
-   cd /opt/cvebot
-   python3 -m venv .venv
-   .venv/bin/pip install -r requirements.txt
-   cp .env.example .env && nano .env
-
-2. Create the service file at /etc/systemd/system/cvebot.service:
-
-   [Unit]
-   Description=CVEBOT Discord bot
-   After=network-online.target
-   Wants=network-online.target
-
-   [Service]
-   Type=simple
-   User=cvebot
-   WorkingDirectory=/opt/cvebot
-   EnvironmentFile=/opt/cvebot/.env
-   ExecStart=/opt/cvebot/.venv/bin/python main.py
-   Restart=always
-   RestartSec=10
-
-   [Install]
-   WantedBy=multi-user.target
-
-3. Enable and start:
-   sudo useradd --system --no-create-home cvebot
-   sudo chown -R cvebot:cvebot /opt/cvebot
-   sudo systemctl daemon-reload
-   sudo systemctl enable --now cvebot
-   sudo journalctl -u cvebot -f    # watch live logs
-
-4. To update manually (pull latest code and restart):
-   cd /opt/cvebot && git pull
-   .venv/bin/pip install -r requirements.txt
-   sudo systemctl restart cvebot
+For bare-metal / no-Docker setups, see the systemd section in HOSTING.md.
 
 ---
 
