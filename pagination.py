@@ -101,6 +101,40 @@ def create_poc_embed(poc: Dict[str, Any]) -> discord.Embed:
 
     return embed
 
+def create_kctf_embed(entry: Dict[str, Any]) -> discord.Embed:
+    """
+    Create an embed for a single kCTF spreadsheet entry.
+
+    Expected keys (all optional): issue, commit, captured, submitter, reward.
+    Any remaining keys are rendered as extra fields.
+    """
+    known = {"issue", "commit", "captured", "submitter", "reward"}
+
+    title = _truncate(entry.get("issue") or "kCTF Entry", EMBED_TITLE_LIMIT)
+    embed = discord.Embed(title=title, color=discord.Color.green())
+
+    def add_safe_field(name: str, value: str, inline: bool = True):
+        if not value:
+            return
+        embed.add_field(
+            name=_truncate(name, EMBED_FIELD_NAME_LIMIT),
+            value=_truncate(value, EMBED_FIELD_VALUE_LIMIT),
+            inline=inline,
+        )
+
+    add_safe_field("Flag Captured", entry.get("captured", ""), inline=True)
+    add_safe_field("Commit", entry.get("commit", ""), inline=False)
+    add_safe_field("Submitter", entry.get("submitter", ""), inline=True)
+    add_safe_field("Reward", entry.get("reward", ""), inline=True)
+
+    # Render any extra columns that were not mapped to known fields
+    for key, value in entry.items():
+        if key not in known and value:
+            add_safe_field(key.capitalize(), value, inline=True)
+
+    return embed
+
+
 def create_audit_embed(repo):
     embed = discord.Embed(
         title=repo['name'],
