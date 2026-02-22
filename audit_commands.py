@@ -27,6 +27,10 @@ class AuditCommands(commands.Cog):
     @app_commands.describe(
         category="Type of project to look for",
         stale="True = forgotten repos (not updated since 2021); False = moderately active repos",
+        min_stars="Minimum stars (default: 10)",
+        max_stars="Maximum stars (default: 500)",
+        min_size="Minimum repo size in KB (default: 10)",
+        max_size="Maximum repo size in KB (default: 10000)",
         page="Page of results (10 repos per page)"
     )
     @app_commands.choices(category=CATEGORY_CHOICES)
@@ -35,6 +39,10 @@ class AuditCommands(commands.Cog):
         interaction: Interaction,
         category: app_commands.Choice[str] = None,
         stale: bool = True,
+        min_stars: int = 10,
+        max_stars: int = 500,
+        min_size: int = 10,
+        max_size: int = 10000,
         page: int = 1,
     ):
         await interaction.response.defer()
@@ -43,6 +51,10 @@ class AuditCommands(commands.Cog):
         repos = await self.bot.github_api.fetch_audit_targets(
             category=cat_value,
             stale=stale,
+            min_stars=min_stars,
+            max_stars=max_stars,
+            min_size=min_size,
+            max_size=max_size,
             page=max(1, page),
         )
 

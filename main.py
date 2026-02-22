@@ -24,7 +24,7 @@ class Client(commands.Bot):
 if __name__ == "__main__":
     init_db()
 
-    load_dotenv()
+    load_dotenv(override=True)
     token = os.getenv("DISCORD_TOKEN")
     api_key = os.getenv("NVD_API_KEY")
     github_key = os.getenv("GITHUB_TOKEN")

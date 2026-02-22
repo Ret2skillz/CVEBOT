@@ -10,9 +10,7 @@ log = logging.getLogger(__name__)
 # Public CSV export of the kCTF Vulnerability Rewards Program spreadsheet.
 # Override via KCTF_SPREADSHEET_URL env variable if needed.
 DEFAULT_KCTF_URL = (
-    "https://docs.google.com/spreadsheets/d/e/"
-    "2PACX-1vS1REdTA29OJftst8xN5B5x8iIUcxuK6bXdzF8G1UXCmRtoNsoQ9MkebMCfH0kdxQiA0YNzS_iS0cSL"
-    "/pub?output=csv"
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vS1REdTA29OJftst8xN5B5x8iIUcxuK6bXdzF8G1UXCmRtoNsoQ9MbebdRdFnj6qZ0Yd7LwQfvYC2oF/pub?output=csv"
 )
 
 
