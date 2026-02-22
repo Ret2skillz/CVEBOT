@@ -44,12 +44,60 @@ def search_by_type(discord_username, type_vuln):
     conn.close()
     return cves_type
 
-def delete_cve(discord_username):
+def delete_cve(discord_username, cve_id):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute(
-        "DELETE FROM saved_cves WHERE discord_username = ?",
+        "DELETE FROM saved_cves WHERE discord_username = ? AND cve_id = ?",
+        (discord_username, cve_id)
+    )
+    conn.commit()
+    conn.close()
+
+def save_audit_repo(discord_username, repo_name, repo_url, repo_desc, stars, language):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """INSERT OR IGNORE INTO saved_audit_repos 
+               (discord_username, repo_name, repo_url, repo_desc, stars, language) 
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (discord_username, repo_name, repo_url, repo_desc, stars, language)
+        )
+        conn.commit()
+    except Exception as e:
+        print(f"Error saving audit repo: {e}")
+    finally:
+        conn.close()
+
+def get_saved_audit_repos(discord_username):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        """SELECT repo_name, repo_url, repo_desc, stars, language 
+           FROM saved_audit_repos 
+           WHERE discord_username = ? 
+           ORDER BY saved_at DESC""",
         (discord_username,)
+    )
+    repos = []
+    for row in cursor.fetchall():
+        repos.append({
+            "name": row[0],
+            "url": row[1],
+            "description": row[2],
+            "stars": row[3],
+            "language": row[4]
+        })
+    conn.close()
+    return repos
+
+def delete_audit_repo(discord_username, repo_url):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "DELETE FROM saved_audit_repos WHERE discord_username = ? AND repo_url = ?",
+        (discord_username, repo_url)
     )
     conn.commit()
     conn.close()

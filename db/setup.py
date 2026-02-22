@@ -17,5 +17,18 @@ def init_db():
         type_vuln TEXT
     )
     """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS saved_audit_repos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        discord_username TEXT NOT NULL,
+        repo_name TEXT NOT NULL,
+        repo_url TEXT NOT NULL,
+        repo_desc TEXT,
+        stars INTEGER,
+        language TEXT,
+        saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(discord_username, repo_url)
+    )
+    """)
     conn.commit()
     conn.close()
