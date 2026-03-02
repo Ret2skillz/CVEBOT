@@ -145,8 +145,11 @@ def create_audit_embed(repo):
     embed.add_field(name="Owner", value=repo['owner'])
     embed.add_field(name="Language", value=repo['language'])
     embed.add_field(name="Stars", value=str(repo['stars']))
+    embed.add_field(name="Forks", value=str(repo.get('forks', 'N/A')))
     embed.add_field(name="Size (KB)", value=str(repo['size_kb']))
     embed.add_field(name="Last Push", value=repo['last_push'])
+    if 'has_releases' in repo:
+        embed.add_field(name="Releases", value="✅ Yes" if repo['has_releases'] else "❌ No")
     return embed
 
 def _embed_to_text(embed: discord.Embed) -> str:
