@@ -30,5 +30,18 @@ def init_db():
         UNIQUE(discord_username, repo_url)
     )
     """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS saved_kctf_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        discord_username TEXT NOT NULL,
+        issue TEXT NOT NULL,
+        commit_url TEXT,
+        captured TEXT,
+        submitter TEXT,
+        reward TEXT,
+        saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(discord_username, issue)
+    )
+    """)
     conn.commit()
     conn.close()

@@ -1,9 +1,12 @@
 import discord
 from discord import app_commands, Interaction
 from discord.ext import commands
+import logging
 from pagination import create_audit_embed
 from github_api import AUDIT_CATEGORIES
 from db.crud import save_audit_repo, get_saved_audit_repos, delete_audit_repo
+
+log = logging.getLogger(__name__)
 
 CATEGORY_CHOICES = [
     app_commands.Choice(name="All categories", value="all"),
@@ -12,6 +15,12 @@ CATEGORY_CHOICES = [
     app_commands.Choice(name="Custom Servers (FTP/HTTP/SMTP…)", value="server"),
     app_commands.Choice(name="File-parsing / custom libs", value="lib"),
     app_commands.Choice(name="Custom crypto libs", value="crypto"),
+]
+
+RELEASES_FILTER_CHOICES = [
+    app_commands.Choice(name="All (no releases filter)", value="all"),
+    app_commands.Choice(name="Only repos with releases", value="only_with"),
+    app_commands.Choice(name="Only repos without releases", value="only_without"),
 ]
 
 
@@ -166,9 +175,14 @@ class AuditCommands(commands.Cog):
         max_stars="Maximum stars (default: 500)",
         min_size="Minimum repo size in KB (default: 10)",
         max_size="Maximum repo size in KB (default: 10000)",
+        min_forks="Minimum forks (default: 0 = no minimum)",
+        max_forks="Maximum forks (default: 0 = no maximum)",
+        show_releases="Show whether each repo has GitHub Releases (requires extra API calls)",
+        releases_filter="Filter repos by presence of GitHub Releases",
         page="Page of results (10 repos per page)"
     )
     @app_commands.choices(category=CATEGORY_CHOICES)
+    @app_commands.choices(releases_filter=RELEASES_FILTER_CHOICES)
     async def auditTargets(
         self,
         interaction: Interaction,
@@ -178,6 +192,10 @@ class AuditCommands(commands.Cog):
         max_stars: int = 500,
         min_size: int = 10,
         max_size: int = 10000,
+        min_forks: int = 0,
+        max_forks: int = 0,
+        show_releases: bool = False,
+        releases_filter: app_commands.Choice[str] = None,
         page: int = 1,
     ):
         await interaction.response.defer()
@@ -190,6 +208,8 @@ class AuditCommands(commands.Cog):
             max_stars=max_stars,
             min_size=min_size,
             max_size=max_size,
+            min_forks=min_forks,
+            max_forks=max_forks,
             page=max(1, page),
         )
 
@@ -198,6 +218,31 @@ class AuditCommands(commands.Cog):
                 "No repositories found for those criteria. Try changing the category or toggling stale."
             )
             return
+
+        # Determine if we need to check releases (for filtering or display)
+        releases_filter_value = releases_filter.value if releases_filter else "all"
+        need_releases_check = show_releases or releases_filter_value != "all"
+
+        if need_releases_check:
+            for repo in repos:
+                try:
+                    repo['has_releases'] = self.bot.github_api.fetch_has_releases(
+                        repo['owner'], repo['name']
+                    )
+                except Exception as e:
+                    log.warning("releases check failed for %s/%s: %s", repo['owner'], repo['name'], e)
+                    repo['has_releases'] = False
+
+            if releases_filter_value == "only_with":
+                repos = [r for r in repos if r.get('has_releases', False)]
+            elif releases_filter_value == "only_without":
+                repos = [r for r in repos if not r.get('has_releases', False)]
+
+            if not repos:
+                await interaction.followup.send(
+                    "No repositories found matching the releases filter. Try a different filter or page."
+                )
+                return
 
         embeds = [create_audit_embed(r) for r in repos]
         view = AuditBrowserView(repos, embeds, interaction.user.id)

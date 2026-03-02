@@ -1,4 +1,7 @@
+import logging
 import requests
+
+log = logging.getLogger(__name__)
 
 # Category keyword mappings used when searching for audit targets
 AUDIT_CATEGORIES = {
@@ -73,6 +76,8 @@ class GITHUBAPI:
             max_stars: int = 500,
             min_size: int = 10,
             max_size: int = 10000,
+            min_forks: int = 0,
+            max_forks: int = 0,
             page: int = 1
     ):
         """
@@ -88,6 +93,8 @@ class GITHUBAPI:
         max_stars: maximum number of stargazers
         min_size : minimum repo size in KB
         max_size : maximum repo size in KB
+        min_forks: minimum number of forks (0 = no minimum)
+        max_forks: maximum number of forks (0 = no maximum)
         page     : result page (1-based, 10 results per page)
         """
         keywords = AUDIT_CATEGORIES.get(category, AUDIT_CATEGORIES["all"])
@@ -97,6 +104,15 @@ class GITHUBAPI:
 
         # stars filter
         stars_filter = f"stars:{min_stars}..{max_stars}"
+
+        # forks filter
+        forks_filter = ""
+        if min_forks > 0 and max_forks > 0:
+            forks_filter = f"forks:{min_forks}..{max_forks}"
+        elif min_forks > 0:
+            forks_filter = f"forks:>={min_forks}"
+        elif max_forks > 0:
+            forks_filter = f"forks:0..{max_forks}"
 
         activity_filter = ""
         if stale:
@@ -119,7 +135,11 @@ class GITHUBAPI:
         for lang in langs:
             # Construct query for this specific language
             # Note: We use parentheses around keywords to ensure logical grouping
-            query = f"({keywords}) {lang} {size_filter} {stars_filter} {activity_filter}"
+            query = f"({keywords}) {lang} {size_filter} {stars_filter}"
+            if forks_filter:
+                query += f" {forks_filter}"
+            if activity_filter:
+                query += f" {activity_filter}"
             
             try:
                 url = self.base_url + "repositories"
@@ -134,7 +154,7 @@ class GITHUBAPI:
                 
                 # Handle 401 retry
                 if response.status_code == 401 and "Authorization" in self.headers:
-                    print(f"GitHub API 401 for {lang}. Retrying without token...")
+                    log.warning("GitHub API 401 for %s. Retrying without token...", lang)
                     headers_no_auth = self.headers.copy()
                     headers_no_auth.pop("Authorization")
                     response = requests.get(url, params=params, headers=headers_no_auth)
@@ -147,16 +167,17 @@ class GITHUBAPI:
                             "owner": repo["owner"]["login"],
                             "url": repo["html_url"],
                             "stars": repo.get("stargazers_count", 0),
+                            "forks": repo.get("forks_count", 0),
                             "size_kb": repo.get("size", 0),
                             "language": repo.get("language", "N/A"),
                             "last_push": repo.get("pushed_at", "N/A"),
                             "description": repo.get("description") or "No description",
                         })
                 else:
-                    print(f"GitHub search failed for {lang}: {response.status_code} {response.text}")
+                    log.warning("GitHub search failed for %s: %s %s", lang, response.status_code, response.text)
                     
             except Exception as e:
-                print(f"fetch_audit_targets error for {lang}: {e}")
+                log.error("fetch_audit_targets error for %s: %s", lang, e)
 
         # Sort combined results by update time to maintain some order
         # But since we paginate, this sort is only local to the page. 
@@ -164,4 +185,17 @@ class GITHUBAPI:
         repos.sort(key=lambda x: x["last_push"], reverse=not stale)
         
         return repos
+
+    def fetch_has_releases(self, owner: str, repo_name: str) -> bool:
+        """Check if a repo has any GitHub releases. Returns False on error."""
+        try:
+            url = f"https://api.github.com/repos/{owner}/{repo_name}/releases"
+            params = {"per_page": 1}
+            response = requests.get(url, params=params, headers=self.headers, timeout=10)
+            if response.status_code == 200:
+                return len(response.json()) > 0
+            return False
+        except Exception as e:
+            log.warning("fetch_has_releases error for %s/%s: %s", owner, repo_name, e)
+            return False
 

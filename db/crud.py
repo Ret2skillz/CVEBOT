@@ -1,5 +1,8 @@
 import sqlite3
+import logging
 from db.setup import DB_PATH
+
+log = logging.getLogger(__name__)
 
 def save_cve(discord_username, cve_id, description, url, tag, type_vuln):
     conn = sqlite3.connect(DB_PATH)
@@ -98,6 +101,60 @@ def delete_audit_repo(discord_username, repo_url):
     cursor.execute(
         "DELETE FROM saved_audit_repos WHERE discord_username = ? AND repo_url = ?",
         (discord_username, repo_url)
+    )
+    conn.commit()
+    conn.close()
+
+
+def save_kctf_entry(discord_username, issue, commit, captured, submitter, reward):
+    """Save a kCTF entry for a user. Returns True if newly saved, False if already exists."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """INSERT OR IGNORE INTO saved_kctf_entries
+               (discord_username, issue, commit_url, captured, submitter, reward)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (discord_username, issue, commit, captured, submitter, reward)
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+    except Exception as e:
+        log.error("Error saving kCTF entry: %s", e)
+        return False
+    finally:
+        conn.close()
+
+
+def get_saved_kctf_entries(discord_username):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        """SELECT issue, commit_url, captured, submitter, reward
+           FROM saved_kctf_entries
+           WHERE discord_username = ?
+           ORDER BY saved_at DESC""",
+        (discord_username,)
+    )
+    entries = []
+    for row in cursor.fetchall():
+        entries.append({
+            "issue": row[0],
+            "commit": row[1],
+            "captured": row[2],
+            "submitter": row[3],
+            "reward": row[4],
+        })
+    conn.close()
+    return entries
+
+
+def delete_kctf_entry(discord_username, issue):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "DELETE FROM saved_kctf_entries WHERE discord_username = ? AND issue = ?",
+        (discord_username, issue)
     )
     conn.commit()
     conn.close()
