@@ -4,8 +4,8 @@ import requests
 AUDIT_CATEGORIES = {
     "emulator": "emulator OR emulation",
     "vm": "virtual machine OR hypervisor",
-    "server": "\"ftp server\" OR \"http server\" OR \"smtp server\" OR \"tcp server\"",
-    "lib": "\"file parser\" OR \"image parser\" OR \"xml parser\" OR \"format parser\"",
+    "server": "server",
+    "lib": "parser",
     "crypto": "crypto OR cryptography OR cipher",
         # Reduced logic to avoid >5 operators error
         # GitHub limit is 5 operators (AND/OR/NOT).

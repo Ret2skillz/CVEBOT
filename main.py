@@ -19,7 +19,17 @@ class Client(commands.Bot):
         await self.load_extension("poc_commands")
         await self.load_extension("audit_commands")
         await self.load_extension("kctf_commands")
-        await self.tree.sync()
+        
+        # Syncing globally can take up to 1 hour.
+        # For development, you often want to sync to a specific guild for instant updates.
+        # But for now, let's print when sync is done.
+        print("Syncing command tree...")
+        synced = await self.tree.sync()
+        print(f"Synced {len(synced)} commands.")
+
+    async def on_ready(self):
+        print(f'Logged in as {self.user} (ID: {self.user.id})')
+
 
 if __name__ == "__main__":
     init_db()
